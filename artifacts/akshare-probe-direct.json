@@ -1,0 +1,57 @@
+{
+  "tested_at": "2026-11-20T19:22:07.732960+08:00",
+  "akshare_version": "1.20.65",
+  "symbol": "000001",
+  "note": "Single request per endpoint; success does not establish freshness, stability, or redistribution rights.",
+  "results": [
+    {
+      "case": "snapshot",
+      "function": "stock_zh_a_spot_em",
+      "parameters": {},
+      "status": "error",
+      "error_type": "SSLError",
+      "error": "HTTPSConnectionPool(host='82.push2.eastmoney.com', port=443): Max retries exceeded with url: /api/qt/clist/get?pn=1&pz=100&po=1&np=1&ut=bd1d9ddb04089700cf9c27f6f7426281&fltt=2&invt=2&fid=f12&fs=m%3A0+t%3A6%2Cm%3A0+t%3A80%2Cm%3A1+t%3A2%2Cm%3A1+t%3A23%2Cm%3A0+t%3A81+s%3A2048&fields=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6%2Cf7%2Cf8%2Cf9%2Cf10%2Cf12%2Cf13%2Cf14%2Cf15%2Cf16%2Cf17%2Cf18%2Cf20%2Cf21%2Cf23%2Cf24%2Cf25%2Cf22%2Cf11%2Cf62%2Cf128%2Cf136%2Cf115%2Cf152 (Caused by SSLError(SSLError(1, '[SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC] decryption failed or bad record mac (_ssl.c:2580)')))",
+      "elapsed_seconds": 22.25
+    },
+    {
+      "case": "quote",
+      "function": "stock_bid_ask_em",
+      "parameters": {
+        "symbol": "000001"
+      },
+      "status": "error",
+      "error_type": "JSONDecodeError",
+      "error": "Expecting value: line 1 column 1 (char 0)",
+      "elapsed_seconds": 4.98
+    },
+    {
+      "case": "minute",
+      "function": "stock_zh_a_hist_min_em",
+      "parameters": {
+        "symbol": "000001",
+        "period": "1",
+        "adjust": ""
+      },
+      "status": "error",
+      "error_type": "SSLError",
+      "error": "HTTPSConnectionPool(host='push2his.eastmoney.com', port=443): Max retries exceeded with url: /api/qt/stock/trends2/get?fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6%2Cf7%2Cf8%2Cf9%2Cf10%2Cf11%2Cf12%2Cf13&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58&ut=7eea3edcaed734bea9cbfc24409ed989&ndays=5&iscr=0&secid=0.000001 (Caused by SSLError(SSLError(1, '[SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC] decryption failed or bad record mac (_ssl.c:2580)')))",
+      "elapsed_seconds": 5.42
+    },
+    {
+      "case": "daily",
+      "function": "stock_zh_a_hist_em",
+      "parameters": {
+        "symbol": "000001",
+        "period": "daily",
+        "start_date": "20261101",
+        "end_date": "20261120",
+        "adjust": ""
+      },
+      "status": "error",
+      "error_type": "SSLError",
+      "error": "HTTPSConnectionPool(host='push2his.eastmoney.com', port=443): Max retries exceeded with url: /api/qt/stock/kline/get?fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61%2Cf116&ut=7eea3edcaed734bea9cbfc24409ed989&klt=101&fqt=0&secid=0.000001&beg=20261101&end=20261120 (Caused by SSLError(SSLError(1, '[SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC] decryption failed or bad record mac (_ssl.c:2580)')))",
+      "elapsed_seconds": 6.66
+    }
+  ],
+  "network_mode": "direct"
+}

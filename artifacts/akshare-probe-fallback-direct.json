@@ -1,0 +1,141 @@
+{
+  "tested_at": "2026-11-20T19:22:59.038864+08:00",
+  "akshare_version": "1.20.65",
+  "symbol": "000001",
+  "note": "Single request per endpoint; success does not establish freshness, stability, or redistribution rights.",
+  "results": [
+    {
+      "case": "snapshot_tx",
+      "function": "stock_zh_a_spot_tx",
+      "parameters": {},
+      "status": "error",
+      "error_type": "SSLError",
+      "error": "HTTPSConnectionPool(host='proxy.finance.qq.com', port=443): Max retries exceeded with url: /cgi/cgi-bin/rank/hs/getBoardRankList?_appver=11.17.0&board_code=aStock&sort_type=price&direct=down&offset=1400&count=200 (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1010)')))",
+      "elapsed_seconds": 41.3
+    },
+    {
+      "case": "snapshot_sina",
+      "function": "stock_zh_a_spot_sina",
+      "parameters": {},
+      "status": "error",
+      "error_type": "ConnectionError",
+      "error": "('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+      "elapsed_seconds": 22.95
+    },
+    {
+      "case": "daily_tx",
+      "function": "stock_zh_a_hist_tx",
+      "parameters": {
+        "symbol": "sz000001",
+        "start_date": "20261101",
+        "end_date": "20261120",
+        "adjust": ""
+      },
+      "status": "ok",
+      "rows": 15,
+      "columns": [
+        "date",
+        "open",
+        "close",
+        "high",
+        "low",
+        "volume",
+        "turnover",
+        "amount"
+      ],
+      "sample": [
+        {
+          "date": "2026-11-18T00:00:00.000",
+          "open": 12.24,
+          "close": 12.2,
+          "high": 12.31,
+          "low": 12.03,
+          "volume": 136249800.0,
+          "turnover": 0.007,
+          "amount": 1660573100.0
+        },
+        {
+          "date": "2026-11-19T00:00:00.000",
+          "open": 12.2,
+          "close": 12.04,
+          "high": 12.26,
+          "low": 11.95,
+          "volume": 155505500.0,
+          "turnover": 0.008,
+          "amount": 1879247300.0
+        },
+        {
+          "date": "2026-11-20T00:00:00.000",
+          "open": 11.99,
+          "close": 12.22,
+          "high": 12.25,
+          "low": 11.91,
+          "volume": 213498900.0,
+          "turnover": 0.011,
+          "amount": 2581567500.0
+        }
+      ],
+      "elapsed_seconds": 7.7
+    },
+    {
+      "case": "daily_sina",
+      "function": "stock_zh_a_hist_sina",
+      "parameters": {
+        "symbol": "sz000001",
+        "start_date": "20261101",
+        "end_date": "20261120",
+        "adjust": ""
+      },
+      "status": "ok",
+      "rows": 15,
+      "columns": [
+        "date",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+        "amount",
+        "outstanding_share",
+        "turnover"
+      ],
+      "sample": [
+        {
+          "date": "2026-11-18T00:00:00.000",
+          "open": 12.24,
+          "high": 12.31,
+          "low": 12.03,
+          "close": 12.2,
+          "volume": 136249816.0,
+          "amount": 1660573146.0,
+          "outstanding_share": 19405684991.0,
+          "turnover": 0.0070211289
+        },
+        {
+          "date": "2026-11-19T00:00:00.000",
+          "open": 12.2,
+          "high": 12.26,
+          "low": 11.95,
+          "close": 12.04,
+          "volume": 155505520.0,
+          "amount": 1879247328.0,
+          "outstanding_share": 19405684991.0,
+          "turnover": 0.0080134002
+        },
+        {
+          "date": "2026-11-20T00:00:00.000",
+          "open": 11.99,
+          "high": 12.25,
+          "low": 11.91,
+          "close": 12.22,
+          "volume": 213498890.0,
+          "amount": 2581567474.0,
+          "outstanding_share": 19405684991.0,
+          "turnover": 0.0110018734
+        }
+      ],
+      "elapsed_seconds": 12.42
+    }
+  ],
+  "network_mode": "direct"
+}

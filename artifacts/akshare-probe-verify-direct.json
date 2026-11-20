@@ -1,0 +1,83 @@
+{
+  "tested_at": "2026-11-20T19:24:39.952322+08:00",
+  "akshare_version": "1.20.65",
+  "symbol": "000001",
+  "note": "Single request per endpoint; success does not establish freshness, stability, or redistribution rights.",
+  "results": [
+    {
+      "case": "minute_sina",
+      "function": "stock_zh_a_hist_min_sina",
+      "parameters": {
+        "symbol": "sz000001",
+        "period": "1",
+        "adjust": ""
+      },
+      "status": "ok",
+      "rows": 1970,
+      "columns": [
+        "day",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+        "amount"
+      ],
+      "sample": [
+        {
+          "day": "2026-11-20 14:56:00",
+          "open": "12.220",
+          "high": "12.250",
+          "low": "12.210",
+          "close": "12.250",
+          "volume": "3466100",
+          "amount": "42412789.8374"
+        },
+        {
+          "day": "2026-11-20 14:57:00",
+          "open": "12.250",
+          "high": "12.250",
+          "low": "12.210",
+          "close": "12.210",
+          "volume": "2499000",
+          "amount": "30573276.9425"
+        },
+        {
+          "day": "2026-11-20 15:00:00",
+          "open": "12.220",
+          "high": "12.220",
+          "low": "12.220",
+          "close": "12.220",
+          "volume": "2302700",
+          "amount": "28138994.1441"
+        }
+      ],
+      "validation": {
+        "prices_numeric": true,
+        "prices_positive": true,
+        "ohlc_consistent": true,
+        "times_valid": true,
+        "times_sorted": true,
+        "times_unique": true,
+        "first_time": "2026-11-10 13:53:00",
+        "last_time": "2026-11-20 15:00:00"
+      },
+      "elapsed_seconds": 3.59
+    },
+    {
+      "case": "daily_sh_tx",
+      "function": "stock_zh_a_hist_tx",
+      "parameters": {
+        "symbol": "sh600519",
+        "start_date": "20261101",
+        "end_date": "20261120",
+        "adjust": ""
+      },
+      "status": "error",
+      "error_type": "ReadTimeout",
+      "error": "HTTPSConnectionPool(host='web.ifzq.gtimg.cn', port=443): Read timed out. (read timeout=8)",
+      "elapsed_seconds": 8.16
+    }
+  ],
+  "network_mode": "direct"
+}

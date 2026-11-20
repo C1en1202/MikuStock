@@ -1,0 +1,77 @@
+{
+  "tested_at": "2026-11-20T19:28:59.183422+08:00",
+  "akshare_version": "1.20.65",
+  "symbol": "000001",
+  "note": "Single request per endpoint; success does not establish freshness, stability, or redistribution rights.",
+  "results": [
+    {
+      "case": "directory_sh",
+      "function": "stock_info_sh_name_code",
+      "parameters": {
+        "symbol": "主板A股"
+      },
+      "status": "error",
+      "error_type": "ProxyError",
+      "error": "HTTPSConnectionPool(host='query.sse.com.cn', port=443): Max retries exceeded with url: /sseQuery/commonQuery.do?STOCK_TYPE=1&REG_PROVINCE=&CSRC_CODE=&STOCK_CODE=&sqlId=COMMON_SSE_CP_GPJCTPZ_GPLB_GP_L&COMPANY_STATUS=2%2C4%2C5%2C7%2C8&type=inParams&isPagination=true&pageHelp.cacheSize=1&pageHelp.beginPage=1&pageHelp.pageSize=10000&pageHelp.pageNo=1&pageHelp.endPage=1 (Caused by ProxyError('Unable to connect to proxy', NewConnectionError(\"HTTPSConnection(host='127.0.0.1', port=80): Failed to establish a new connection: [WinError 10013] 以一种访问权限不允许的方式做了一个访问套接字的尝试。\")))",
+      "elapsed_seconds": 0.0
+    },
+    {
+      "case": "directory_sz",
+      "function": "stock_info_sz_name_code",
+      "parameters": {
+        "symbol": "A股列表"
+      },
+      "status": "error",
+      "error_type": "ProxyError",
+      "error": "HTTPSConnectionPool(host='www.szse.cn', port=443): Max retries exceeded with url: /api/report/ShowReport?SHOWTYPE=xlsx&CATALOGID=1110&TABKEY=tab1&random=0.6935816432433362 (Caused by ProxyError('Unable to connect to proxy', NewConnectionError(\"HTTPSConnection(host='127.0.0.1', port=80): Failed to establish a new connection: [WinError 10013] 以一种访问权限不允许的方式做了一个访问套接字的尝试。\")))",
+      "elapsed_seconds": 0.0
+    },
+    {
+      "case": "calendar",
+      "function": "calendar_trade_date_hist_sina",
+      "parameters": {},
+      "status": "error",
+      "error_type": "ProxyError",
+      "error": "HTTPSConnectionPool(host='finance.sina.com.cn', port=443): Max retries exceeded with url: /realstock/company/klc_td_sh.txt (Caused by ProxyError('Unable to connect to proxy', NewConnectionError(\"HTTPSConnection(host='127.0.0.1', port=80): Failed to establish a new connection: [WinError 10013] 以一种访问权限不允许的方式做了一个访问套接字的尝试。\")))",
+      "elapsed_seconds": 0.02
+    },
+    {
+      "case": "suspensions",
+      "function": "stock_tfp_em",
+      "parameters": {
+        "date": "20261120"
+      },
+      "status": "error",
+      "error_type": "ProxyError",
+      "error": "HTTPSConnectionPool(host='datacenter-web.eastmoney.com', port=443): Max retries exceeded with url: /api/data/v1/get?sortColumns=SUSPEND_START_DATE&sortTypes=-1&pageSize=500&pageNumber=1&reportName=RPT_CUSTOM_SUSPEND_DATA_INTERFACE&columns=ALL&source=WEB&client=WEB&filter=%28MARKET%3D%22%E5%85%A8%E9%83%A8%22%29%28DATETIME%3D%272026-11-20%27%29 (Caused by ProxyError('Unable to connect to proxy', NewConnectionError(\"HTTPSConnection(host='127.0.0.1', port=80): Failed to establish a new connection: [WinError 10013] 以一种访问权限不允许的方式做了一个访问套接字的尝试。\")))",
+      "elapsed_seconds": 0.02
+    },
+    {
+      "case": "minute_sh",
+      "function": "stock_zh_a_hist_min_sina",
+      "parameters": {
+        "symbol": "sh600519",
+        "period": "1",
+        "adjust": ""
+      },
+      "status": "error",
+      "error_type": "ProxyError",
+      "error": "HTTPSConnectionPool(host='quotes.sina.cn', port=443): Max retries exceeded with url: /cn/api/jsonp_v2.php/=/CN_MarketDataService.getKLineData?symbol=sh600519&scale=1&ma=no&datalen=1970 (Caused by ProxyError('Unable to connect to proxy', NewConnectionError(\"HTTPSConnection(host='127.0.0.1', port=80): Failed to establish a new connection: [WinError 10013] 以一种访问权限不允许的方式做了一个访问套接字的尝试。\")))",
+      "elapsed_seconds": 0.0
+    },
+    {
+      "case": "minute_sz",
+      "function": "stock_zh_a_hist_min_sina",
+      "parameters": {
+        "symbol": "sz000001",
+        "period": "1",
+        "adjust": ""
+      },
+      "status": "error",
+      "error_type": "ProxyError",
+      "error": "HTTPSConnectionPool(host='quotes.sina.cn', port=443): Max retries exceeded with url: /cn/api/jsonp_v2.php/=/CN_MarketDataService.getKLineData?symbol=sz000001&scale=1&ma=no&datalen=1970 (Caused by ProxyError('Unable to connect to proxy', NewConnectionError(\"HTTPSConnection(host='127.0.0.1', port=80): Failed to establish a new connection: [WinError 10013] 以一种访问权限不允许的方式做了一个访问套接字的尝试。\")))",
+      "elapsed_seconds": 0.0
+    }
+  ],
+  "network_mode": "system_proxy"
+}
