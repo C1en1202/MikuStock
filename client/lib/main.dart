@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'market_data.dart';
 import 'market_gateway.dart';
+import 'module_transition.dart';
 import 'terminal_panels.dart';
 import 'terminal_theme.dart';
 
@@ -510,10 +511,13 @@ class _TerminalState extends State<_Terminal> {
                     Expanded(
                       child: _restoring
                           ? const Center(child: CircularProgressIndicator())
-                          : ListView(
-                              key: ValueKey(_section),
-                              padding: const EdgeInsets.all(12),
-                              children: [page],
+                          : ModuleTransition(
+                              module: _section,
+                              child: ListView(
+                                key: ValueKey(_section),
+                                padding: const EdgeInsets.all(12),
+                                children: [page],
+                              ),
                             ),
                     ),
                   ],
