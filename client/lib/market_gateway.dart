@@ -92,6 +92,45 @@ class MarketGateway {
             as Map<String, dynamic>,
       );
 
+  Future<PaperAccount> paperLimitOrder({
+    required String accountId,
+    required String requestId,
+    required PaperQuote quote,
+    required String side,
+    required int quantity,
+    required int limitPrice,
+  }) async => PaperAccount.fromJson(
+    await _request('paper_limit_order', {
+      'account_id': accountId,
+      'request_id': requestId,
+      'symbol': quote.symbol,
+      'day': quote.day,
+      'side': side,
+      'quantity': quantity,
+      'limit_price': limitPrice,
+    }) as Map<String, dynamic>,
+  );
+
+  Future<PaperAccount> cancelPaperOrder(
+    String accountId,
+    int orderId,
+    String day,
+  ) async => PaperAccount.fromJson(
+    await _request('paper_cancel_order', {
+      'account_id': accountId,
+      'order_id': orderId,
+      'day': day,
+    }) as Map<String, dynamic>,
+  );
+
+  Future<PaperAccount> matchPaperOrders(String accountId, String day) async =>
+      PaperAccount.fromJson(
+        await _request('paper_match_orders', {
+          'account_id': accountId,
+          'day': day,
+        }) as Map<String, dynamic>,
+      );
+
   Future<Object?> _request(
     String operation,
     Map<String, Object?> payload,

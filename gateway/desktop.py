@@ -47,6 +47,14 @@ def serve(market_data, source, sink, catalog=None):
                     )})
                 case "paper_reset":
                     result = trading.reset(request["account_id"], request["day"])
+                case "paper_limit_order":
+                    result = trading.place_limit(**{key: request[key] for key in (
+                        "account_id", "request_id", "symbol", "side", "day", "quantity", "limit_price"
+                    )})
+                case "paper_cancel_order":
+                    result = trading.cancel(account_id=request["account_id"], order_id=request["order_id"], day=request["day"])
+                case "paper_match_orders":
+                    result = trading.match_orders(account_id=request["account_id"], day=request["day"])
                 case _:
                     raise ValueError("unknown operation")
             response = {"result": result}
