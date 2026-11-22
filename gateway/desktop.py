@@ -6,10 +6,12 @@ import json
 from threading import Lock
 
 from .market_data import BarQuery, UpstreamError
+from .paper_trading import PaperTrading
 
 
 def serve(market_data, source, sink, catalog=None):
     write_lock = Lock()
+    trading = PaperTrading(market_data.connect)
 
     def respond(request):
         try:
@@ -35,6 +37,16 @@ def serve(market_data, source, sink, catalog=None):
                     result = catalog.for_symbols(symbols)
                 case "stock_search":
                     result = catalog.search(request["keyword"])
+                case "paper_account":
+                    result = trading.snapshot(request["day"])
+                case "paper_quote":
+                    result = trading.quote(request["symbol"], request["day"])
+                case "paper_order":
+                    result = trading.order(**{key: request[key] for key in (
+                        "account_id", "request_id", "symbol", "side", "day", "quantity", "price"
+                    )})
+                case "paper_reset":
+                    result = trading.reset(request["account_id"], request["day"])
                 case _:
                     raise ValueError("unknown operation")
             response = {"result": result}

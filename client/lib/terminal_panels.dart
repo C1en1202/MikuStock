@@ -355,6 +355,7 @@ class QuotePanel extends StatelessWidget {
     required this.onFavorite,
     required this.onInterval,
     required this.onRefresh,
+    required this.onTrade,
     super.key,
   });
 
@@ -368,6 +369,7 @@ class QuotePanel extends StatelessWidget {
   final VoidCallback onFavorite;
   final ValueChanged<String> onInterval;
   final VoidCallback onRefresh;
+  final VoidCallback onTrade;
 
   @override
   Widget build(BuildContext context) {
@@ -417,6 +419,11 @@ class QuotePanel extends StatelessWidget {
                         tooltip: '刷新行情',
                         onPressed: loading ? null : onRefresh,
                         icon: const Icon(Icons.refresh, size: 20),
+                      ),
+                      IconButton(
+                        tooltip: '模拟交易该证券',
+                        onPressed: onTrade,
+                        icon: const Icon(Icons.swap_horiz, size: 20),
                       ),
                     ],
                   ),
@@ -661,21 +668,6 @@ class DataPanel extends StatelessWidget {
 String marketTime(String value) => value.length >= 16
     ? '${value.substring(0, 10)} ${value.substring(11, 16)}'
     : value;
-
-class TradePage extends StatelessWidget {
-  const TradePage({super.key});
-
-  @override
-  Widget build(BuildContext context) => const _Panel(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _PanelHeading(title: '模拟交易'),
-        SizedBox(height: 170, child: _PanelMessage('模拟交易功能开发中')),
-      ],
-    ),
-  );
-}
 
 class SecuritySearch extends StatefulWidget {
   const SecuritySearch({

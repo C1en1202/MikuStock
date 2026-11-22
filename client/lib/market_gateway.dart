@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 
 import 'market_data.dart';
+import 'paper_trading.dart';
 
 enum MarketRead { cacheOnly, preferCache, refresh }
 
@@ -56,6 +57,40 @@ class MarketGateway {
   Future<void> savePreferences(Map<String, Object?> value) async {
     await _request('save_preferences', {'value': value});
   }
+
+  Future<PaperAccount> paperAccount(String day) async => PaperAccount.fromJson(
+    await _request('paper_account', {'day': day}) as Map<String, dynamic>,
+  );
+
+  Future<PaperQuote> paperQuote(String symbol, String day) async =>
+      PaperQuote.fromJson(
+        await _request('paper_quote', {'symbol': symbol, 'day': day})
+            as Map<String, dynamic>,
+      );
+
+  Future<PaperAccount> paperOrder({
+    required String accountId,
+    required String requestId,
+    required PaperQuote quote,
+    required String side,
+    required int quantity,
+  }) async => PaperAccount.fromJson(
+    await _request('paper_order', {
+      'account_id': accountId,
+      'request_id': requestId,
+      'symbol': quote.symbol,
+      'day': quote.day,
+      'price': quote.price,
+      'side': side,
+      'quantity': quantity,
+    }) as Map<String, dynamic>,
+  );
+
+  Future<PaperAccount> resetPaperAccount(String accountId, String day) async =>
+      PaperAccount.fromJson(
+        await _request('paper_reset', {'account_id': accountId, 'day': day})
+            as Map<String, dynamic>,
+      );
 
   Future<Object?> _request(
     String operation,

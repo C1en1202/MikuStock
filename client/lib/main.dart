@@ -7,6 +7,7 @@ import 'market_gateway.dart';
 import 'module_transition.dart';
 import 'terminal_panels.dart';
 import 'terminal_theme.dart';
+import 'trade_page.dart';
 
 void main() => runApp(const MikuStock());
 
@@ -434,6 +435,7 @@ class _TerminalState extends State<_Terminal> {
             onFavorite: _toggleFavorite,
             onInterval: _selectInterval,
             onRefresh: () => _loadSelection(mode: MarketRead.refresh),
+            onTrade: () => _navigate(TerminalPage.trade),
           );
           final overview = OverviewPanel(
             securities: _watchlist.take(3).map(_securityFor).toList(),
@@ -463,7 +465,12 @@ class _TerminalState extends State<_Terminal> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [watchlist, const SizedBox(height: 12), overview],
             ),
-            TerminalPage.trade => const TradePage(),
+            TerminalPage.trade => TradePage(
+              gateway: _gateway,
+              day: _day,
+              security: selected,
+              securityFor: _securityFor,
+            ),
             TerminalPage.search => Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
