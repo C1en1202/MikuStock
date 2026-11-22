@@ -8,6 +8,7 @@ import sys
 from urllib.parse import quote
 
 import akshare
+from akshare.exceptions import RateLimitError
 import requests
 
 from .symbols import parse_symbol
@@ -91,13 +92,52 @@ def fetch_eastmoney(symbol, interval, start, end):
     return frame
 
 
+def fetch_tencent(symbol, start, end):
+    """Fetch the requested unadjusted range without the optional listing-date service."""
+    # The AKShare Tencent helper first calls weekTrends on a separate host to
+    # discover the listing date. A failure there prevents a working K-line
+    # endpoint from being queried at all. BarQuery already bounds our date range.
+    response = requests.get(
+        "https://proxy.finance.qq.com/ifzqgtimg/appstock/app/newfqkline/get",
+        params={"param": f"{symbol},day,{start},{end},640,"},
+    )
+    text = response.text.strip()
+    payload = json.loads(text[text.index("{"):].rstrip(";"), parse_float=Decimal)
+    if not isinstance(payload, dict) or payload.get("code") != 0 or not isinstance(payload.get("data"), dict):
+        raise ValueError("invalid Tencent K-line response")
+    data = payload["data"].get(symbol)
+    if not isinstance(data, dict):
+        raise ValueError("missing Tencent security data")
+    if "day" not in data and any(key in data for key in ("qfqday", "hfqday")):
+        raise ValueError("expected unadjusted Tencent prices")
+    rows = data.get("day", [])
+    if not isinstance(rows, list):
+        raise ValueError("invalid Tencent daily bars")
+    result = []
+    # Match the units of the pinned AKShare adapter: STAR volume is already
+    # shares, other supported A-share boards use lots; turnover amounts use 10k CNY.
+    multiplier = 1 if symbol.startswith(("sh688", "sh689")) else 100
+    for row in rows:
+        if not isinstance(row, list) or len(row) < 9:
+            raise ValueError("invalid Tencent daily row")
+        day = date.fromisoformat(str(row[0])).isoformat()
+        if start <= day <= end:
+            result.append(dict(
+                date=day, open=str(row[1]), close=str(row[2]), high=str(row[3]), low=str(row[4]),
+                volume=str(Decimal(str(row[5])) * multiplier),
+                amount=str(Decimal(str(row[8])) * 10000),
+            ))
+    return result
+
+
 def fetch(source, symbol, interval, start, end):
     if source == "eastmoney":
         return fetch_eastmoney(symbol, interval, start, end)
     if interval == "1m":
         return akshare.stock_zh_a_hist_min_sina(symbol=symbol, period="1", adjust="")
-    daily = akshare.stock_zh_a_hist_tx if source == "tencent" else akshare.stock_zh_a_hist_sina
-    return daily(
+    if source == "tencent":
+        return fetch_tencent(symbol, start, end)
+    return akshare.stock_zh_a_hist_sina(
         symbol=symbol, start_date=date.fromisoformat(start).strftime("%Y%m%d"),
         end_date=date.fromisoformat(end).strftime("%Y%m%d"), adjust="",
     )
@@ -133,18 +173,22 @@ def main():
                 # Preserve upstream strings and the round-trip representation of floats.
                 rows = [
                     {key: str(value) for key, value in row.items()}
-                    for row in frame.to_dict("records")
+                    for row in (frame if isinstance(frame, list) else frame.to_dict("records"))
                 ]
         payload = {"rows": rows}
+    except RateLimitError:
+        payload = {"error": "rate_limited"}
     except requests.HTTPError as exc:
         status = exc.response.status_code
         payload = {"error": "rate_limited" if status == 429 else
                    "server_error" if status >= 500 else "http_error"}
     except requests.Timeout:
         payload = {"error": "timeout"}
+    except requests.exceptions.ProxyError:
+        payload = {"error": "proxy_error"}
     except requests.exceptions.SSLError:
         payload = {"error": "tls_error"}
-    except requests.ConnectionError:
+    except (requests.ConnectionError, requests.exceptions.ChunkedEncodingError):
         payload = {"error": "connection"}
     except Exception:
         payload = {"error": "invalid_response"}

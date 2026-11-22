@@ -480,6 +480,8 @@ class QuotePanel extends StatelessWidget {
                           : error ??
                                 (snapshot == null
                                     ? '本地暂无该日期的行情'
+                                    : interval == '1m'
+                                    ? '所选日期暂无分时行情，请选择有行情的交易日；历史分时受数据源覆盖范围限制'
                                     : '所选日期没有可用行情'),
                       onRetry: loading ? null : onRefresh,
                       actionLabel: error == null ? '获取行情' : '重试',

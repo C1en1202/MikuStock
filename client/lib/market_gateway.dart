@@ -1,17 +1,16 @@
-import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
 
 import 'market_data.dart';
+import 'gateway_transport.dart';
 import 'paper_trading.dart';
 
 enum MarketRead { cacheOnly, preferCache, refresh }
 
 class MarketGateway {
-  Future<_GatewayConnection>? _connection;
-  bool _closed = false;
+  late final _transport = GatewayClient(_start);
+  GatewayDiagnostics? _diagnostics;
 
   Future<MarketSnapshot?> bars({
     required String symbol,
@@ -131,27 +130,10 @@ class MarketGateway {
         }) as Map<String, dynamic>,
       );
 
-  Future<Object?> _request(
-    String operation,
-    Map<String, Object?> payload,
-  ) async {
-    if (_closed) throw const GatewayException('行情网关已关闭');
-    final opening = _connection ??= _start();
-    try {
-      return await (await opening).request(operation, payload);
-    } catch (_) {
-      if (identical(_connection, opening)) {
-        final connection = await opening.then<_GatewayConnection?>(
-          (value) => value,
-          onError: (Object _) => null,
-        );
-        if (connection == null || connection.isClosed) _connection = null;
-      }
-      rethrow;
-    }
-  }
+  Future<Object?> _request(String operation, Map<String, Object?> payload) =>
+      _transport.request(operation, payload);
 
-  Future<_GatewayConnection> _start() async {
+  Future<GatewayConnection> _start() async {
     final environment = Platform.environment;
     final app = File(Platform.resolvedExecutable).parent;
     final runtime = Directory.fromUri(app.uri.resolve('gateway-runtime/'));
@@ -168,22 +150,39 @@ class MarketGateway {
     } else {
       throw const GatewayException('Windows 本地应用数据目录不可用');
     }
+    final diagnostics = _diagnostics ??= GatewayDiagnostics(
+      File.fromUri(storage.uri.resolve('gateway.log')),
+    );
     final legacy = _findLegacyDatabase(app);
-    final process = await Process.start(python.path, [
-      '-B',
-      '-m',
-      'gateway',
-      '--stdio',
-      '--db',
-      File.fromUri(storage.uri.resolve('market.sqlite3')).path,
-      if (legacy != null) ...['--legacy-db', legacy.path],
-      if (environment['MIKUSTOCK_USE_PROXY'] != '1') '--direct',
-    ], workingDirectory: runtime.path);
-    final connection = _GatewayConnection(process);
+    final Process process;
+    try {
+      process = await Process.start(
+        python.path,
+        [
+          '-B',
+          '-m',
+          'gateway',
+          '--stdio',
+          '--db',
+          File.fromUri(storage.uri.resolve('market.sqlite3')).path,
+          if (legacy != null) ...['--legacy-db', legacy.path],
+          if (environment['MIKUSTOCK_USE_PROXY'] != '1') '--direct',
+        ],
+        workingDirectory: runtime.path,
+        environment: {
+          'PYTHONUTF8': '1',
+          'PYTHONIOENCODING': 'utf-8',
+          'PYTHONUNBUFFERED': '1',
+        },
+      );
+    } on ProcessException catch (error) {
+      diagnostics.record('gateway launch failed: OS error=${error.errorCode}');
+      throw const GatewayException('无法启动内置行情网关，请检查程序目录是否完整；详情见 gateway.log');
+    }
+    final connection = GatewayConnection(process, log: diagnostics.record);
     await const MethodChannel('mikustock/window')
         .invokeMethod<void>('ownGateway', process.pid)
         .then<void>((_) {}, onError: (Object _) {});
-    if (_closed) connection.close();
     return connection;
   }
 
@@ -202,72 +201,6 @@ class MarketGateway {
   }
 
   void close() {
-    _closed = true;
-    unawaited(
-      _connection?.then((value) => value.close(), onError: (Object _) {}),
-    );
-  }
-}
-
-class _GatewayConnection {
-  _GatewayConnection(this._process) {
-    _process.stdin.done.ignore();
-    _process.stderr.drain<void>().ignore();
-    _process.stdout
-        .transform(utf8.decoder)
-        .transform(const LineSplitter())
-        .listen(_read, onError: (Object _) => close(), onDone: close);
-  }
-
-  final Process _process;
-  final _requests = <int, Completer<Object?>>{};
-  int _nextId = 0;
-  bool isClosed = false;
-
-  Future<Object?> request(
-    String operation,
-    Map<String, Object?> payload,
-  ) async {
-    if (isClosed) throw const GatewayException('内置行情网关已退出');
-    final id = _nextId++;
-    final completer = _requests[id] = Completer<Object?>();
-    try {
-      _process.stdin.writeln(
-        jsonEncode({'id': id, 'operation': operation, ...payload}),
-      );
-      return await completer.future.timeout(const Duration(minutes: 5));
-    } finally {
-      _requests.remove(id);
-    }
-  }
-
-  void _read(String line) {
-    final Object? response;
-    try {
-      response = jsonDecode(line);
-    } on FormatException {
-      close();
-      return;
-    }
-    if (response is! Map<String, dynamic>) return;
-    final request = _requests.remove(response['id']);
-    if (request == null) return;
-    if (response['error'] case final String error) {
-      request.completeError(
-        GatewayException(response['detail'] as String? ?? error),
-      );
-    } else {
-      request.complete(response['result']);
-    }
-  }
-
-  void close() {
-    if (isClosed) return;
-    isClosed = true;
-    _process.stdin.close().ignore();
-    for (final request in _requests.values) {
-      request.completeError(const GatewayException('内置行情网关已退出'));
-    }
-    _requests.clear();
+    _transport.close();
   }
 }

@@ -5,17 +5,20 @@ from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 import json
+import logging
 from pathlib import Path
 import sqlite3
 import subprocess
 import sys
-from time import sleep
+from threading import Lock
+from time import sleep, time as wall_time
 
 from .symbols import parse_symbol
 
 
 MARKET_TZ = timezone(timedelta(hours=8))
 SOURCES = {"1d": ("tencent", "sina", "eastmoney"), "1m": ("sina", "eastmoney")}
+SOURCE_COOLDOWN_SECONDS = 300
 CONTINUOUS_LABELS = {
     time(minute // 60, minute % 60)
     for start, end in ((571, 690), (781, 897))
@@ -64,7 +67,10 @@ def worker_request(arguments, *, direct=False, timeout=25):
         command.append("--direct")
     try:
         result = subprocess.run(
-            command, capture_output=True, encoding="utf-8", errors="replace", timeout=timeout,
+            # The worker only reads argv. Inheriting the desktop protocol's
+            # stdin can cause its parent reader to see EOF on Windows.
+            command, stdin=subprocess.DEVNULL,
+            capture_output=True, encoding="utf-8", errors="replace", timeout=timeout,
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
         )
     except subprocess.TimeoutExpired as exc:
@@ -134,11 +140,13 @@ def normalize(rows, query, fetched_at):
 
 
 class MarketData:
-    def __init__(self, database, worker=run_worker, backoff=sleep):
+    def __init__(self, database, worker=run_worker, backoff=sleep, clock=wall_time):
         self.database = Path(database)
         self.database.parent.mkdir(parents=True, exist_ok=True)
         self.worker = worker
         self.backoff = backoff
+        self.clock = clock
+        self.source_locks = {source: Lock() for sources in SOURCES.values() for source in sources}
         with self.connect() as connection:
             connection.execute("""
                 CREATE TABLE IF NOT EXISTS bar_snapshots (
@@ -151,6 +159,12 @@ class MarketData:
                 CREATE TABLE IF NOT EXISTS desktop_preferences (
                     id INTEGER PRIMARY KEY CHECK (id = 1),
                     payload TEXT NOT NULL
+                )
+            """)
+            connection.execute("""
+                CREATE TABLE IF NOT EXISTS market_source_cooldowns (
+                    source TEXT PRIMARY KEY,
+                    retry_at REAL NOT NULL
                 )
             """)
 
@@ -186,6 +200,30 @@ class MarketData:
                 ON CONFLICT(id) DO UPDATE SET payload = excluded.payload
             """, (json.dumps(value, ensure_ascii=False),))
 
+    def _fetch_source(self, source, query):
+        # A provider's limit can apply across symbols and intervals. Persist it
+        # across gateway restarts, and serialize calls so peers see a new limit.
+        with self.source_locks[source]:
+            with self.connect() as connection:
+                row = connection.execute(
+                    "SELECT retry_at FROM market_source_cooldowns WHERE source = ?", (source,)
+                ).fetchone()
+            if row and row[0] > self.clock():
+                raise UpstreamError("rate_limited")
+            try:
+                result = self.worker(source, query)
+            except UpstreamError as exc:
+                if exc.code == "rate_limited":
+                    with self.connect() as connection:
+                        connection.execute("""
+                            INSERT INTO market_source_cooldowns VALUES (?, ?)
+                            ON CONFLICT(source) DO UPDATE SET retry_at = excluded.retry_at
+                        """, (source, self.clock() + SOURCE_COOLDOWN_SECONDS))
+                raise
+            with self.connect() as connection:
+                connection.execute("DELETE FROM market_source_cooldowns WHERE source = ?", (source,))
+            return result
+
     def bars(self, query, mode="refresh"):
         if mode != "refresh":
             cached = self.cached_bars(query)
@@ -199,11 +237,12 @@ class MarketData:
         for source in sources:
             for attempt in range(2):
                 try:
-                    raw = self.worker(source, query)
+                    raw = self._fetch_source(source, query)
                     fetched_at = datetime.now(MARKET_TZ)
                     bars, coverage = normalize(raw, query, fetched_at)
                 except UpstreamError as exc:
                     error = exc.code
+                    logging.warning("market source=%s interval=%s error=%s", source, query.interval, error)
                     if error in {"timeout", "connection", "server_error"} and attempt == 0:
                         self.backoff(0.5)
                         continue
@@ -235,6 +274,11 @@ class MarketData:
         cached = self.cached_bars(query, reason=error or "empty")
         if cached is not None:
             return cached
+        # A valid empty response is different from every provider failing.
+        # For example, Sina has no Sunday minute bars while the optional backup
+        # is rate-limited. Preserve the no-data result instead of reporting a ban.
+        if empty is not None:
+            return empty
         if error:
             raise UpstreamError(error)
         return empty
